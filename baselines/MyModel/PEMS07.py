@@ -55,7 +55,15 @@ CFG = EasyDict()
 
 # 通用设置
 CFG.DESCRIPTION = '一个示例配置' # 配置的描述，不用于 BasicTS 中，但对用户记住配置的用途有帮助
-CFG.GPU_NUM = 1 # 使用的 GPU 数量（0 表示使用 CPU 模式）
+# 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
+_env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
+if _env_gpu_num is not None:
+    try:
+        CFG.GPU_NUM = int(_env_gpu_num)
+    except ValueError:
+        CFG.GPU_NUM = 1   # 出错就用单卡
+else:
+    CFG.GPU_NUM = 1       # 默认单卡
 
 # 执行器
 CFG.RUNNER = SimpleTimeSeriesForecastingRunner # 执行器类

@@ -46,7 +46,15 @@ NUM_EPOCHS = 200
 CFG = EasyDict()
 # General settings
 CFG.DESCRIPTION = 'An Example Config'
-CFG.GPU_NUM = 1 # Number of GPUs to use (0 for CPU mode)
+# 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
+_env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
+if _env_gpu_num is not None:
+    try:
+        CFG.GPU_NUM = int(_env_gpu_num)
+    except ValueError:
+        CFG.GPU_NUM = 1   # 出错就用单卡
+else:
+    CFG.GPU_NUM = 1       # 默认单卡
 # Runner
 CFG.RUNNER = SimpleTimeSeriesForecastingRunner
 
