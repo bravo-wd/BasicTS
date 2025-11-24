@@ -20,7 +20,7 @@ from .arch import MyModel
 ############################## 热门参数 ##############################
 
 # 数据集和指标配置
-DATA_NAME = 'PEMS07'  # 数据集名称
+DATA_NAME = 'PEMS08'  # 数据集名称
 regular_settings = get_regular_settings(DATA_NAME)
 INPUT_LEN = regular_settings['INPUT_LEN']  # 输入序列长度
 OUTPUT_LEN = regular_settings['OUTPUT_LEN']  # 输出序列长度
@@ -32,7 +32,7 @@ NULL_VAL = regular_settings['NULL_VAL'] # 数据中的空值
 # 模型架构和参数
 MODEL_ARCH = MyModel
 MODEL_PARAM = {
-    "num_nodes": 883,
+    "num_nodes": 170,
     "input_len": INPUT_LEN,
     "input_dim": 3,
     "embed_dim": 32,
@@ -47,7 +47,7 @@ MODEL_PARAM = {
     "time_of_day_size": 288,
     "day_of_week_size": 7
 }
-NUM_EPOCHS = 200
+NUM_EPOCHS = 100
 
 ############################## 通用配置 ##############################
 
@@ -204,7 +204,7 @@ CFG.TRAIN.CLIP_GRAD_PARAM = {
 # 训练数据加载器设置
 CFG.TRAIN.DATA = EasyDict() # 训练数据加载器设置，必须为训练指定。
 CFG.TRAIN.DATA.PREFETCH = False # 是否使用预取的数据加载器。详见 https://github.com/justheuristic/prefetch_generator。默认值：False。
-CFG.TRAIN.DATA.BATCH_SIZE = 32 # 训练的批量大小。默认值：1
+CFG.TRAIN.DATA.BATCH_SIZE = 64 # 训练的批量大小。默认值：1
 CFG.TRAIN.DATA.SHUFFLE = True # 是否对训练数据进行洗牌。默认值：False
 CFG.TRAIN.DATA.COLLATE_FN = None # 训练数据加载器的合并函数。默认值：None
 CFG.TRAIN.DATA.NUM_WORKERS = 0 # 训练数据加载器的工作线程数。默认值：0

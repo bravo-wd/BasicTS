@@ -46,7 +46,15 @@ NUM_EPOCHS = 100
 CFG = EasyDict()
 # General settings
 CFG.DESCRIPTION = 'An Example Config'
-CFG.GPU_NUM = 1 # Number of GPUs to use (0 for CPU mode)
+# 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
+_env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
+if _env_gpu_num is not None:
+    try:
+        CFG.GPU_NUM = int(_env_gpu_num)
+    except ValueError:
+        CFG.GPU_NUM = 1   # 出错就用单卡
+else:
+    CFG.GPU_NUM = 1       # 默认单卡
 # Runner
 CFG.RUNNER = SimpleTimeSeriesForecastingRunner
 
@@ -118,6 +126,9 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "milestones": [1, 50, 80],
     "gamma": 0.5
 }
+# 提前停止
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30 # 提前停止的耐心值。默认值：None。如果未指定，则不会使用提前停止。
+
 CFG.TRAIN.CLIP_GRAD_PARAM = {
     'max_norm': 5.0
 }
@@ -143,5 +154,5 @@ CFG.TEST.DATA.BATCH_SIZE = 64
 CFG.EVAL = EasyDict()
 
 # Evaluation parameters
-CFG.EVAL.HORIZONS = [3, 6, 12] # Prediction horizons for evaluation. Default: []
+CFG.EVAL.HORIZONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] # Prediction horizons for evaluation. Default: []
 CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True

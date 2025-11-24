@@ -1,10 +1,19 @@
 #!/bin/bash
 #JSUB -q gpu
 #JSUB -gpgpu 8
-#JSUB -J basicts_MyModel_8gpu
+#JSUB -J basicts_STAEformer_PEMS07
 #JSUB -o output/output.%J
 #JSUB -e error/error.%J
 #JSUB -cwd /home/25181214631/BasicTS
+
+#gpu26-A100-PCIE-40GB * 4
+#gpu22-A100-PCIE-16GB * 4
+#gpu04-A100-PCIE-40GB * 2
+#gpu10-V100-SXM2-32GB * 8
+#gpu09-V100S-PCIE-32GB * 2
+#gpu14-V100-PCIE-32GB * 4
+#gpu13-V100-PCIE-32GB * 2
+#gpu21-P100-PCIE-16GB * 3
 
 GPU_NUM=8
 
@@ -37,4 +46,4 @@ export BASICTS_GPU_NUM="$GPU_NUM"
 
 echo "[INFO] Using GPUs: $GPUS (total: $GPU_NUM)"
 
-python experiments/train.py --cfg baselines/MyModel/PEMS04.py --gpus "$GPUS"
+python experiments/train.py --cfg baselines/STAEformer/PEMS07.py --gpus "$GPUS"
