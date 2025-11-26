@@ -125,11 +125,13 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "milestones": [1, 18, 36, 54, 72],
     "gamma": 0.5
 }
+# 提前停止
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = None
 # Train data loader settings
 CFG.TRAIN.DATA = EasyDict()
 CFG.TRAIN.DATA.BATCH_SIZE = 8
 CFG.TRAIN.DATA.SHUFFLE = True
-CFG.TRAIN.DATA.NUM_WORKERS = 2
+CFG.TRAIN.DATA.NUM_WORKERS = min([os.cpu_count(), 8 if 8 > 1 else 0, 8])
 CFG.TRAIN.DATA.PIN_MEMORY = True
 CFG.TRAIN.CLIP_GRAD_PARAM = {
     "max_norm": 3.0
@@ -140,7 +142,7 @@ CFG.VAL = EasyDict()
 CFG.VAL.INTERVAL = 1
 CFG.VAL.DATA = EasyDict()
 CFG.VAL.DATA.BATCH_SIZE = 8
-CFG.VAL.DATA.NUM_WORKERS = 2
+CFG.VAL.DATA.NUM_WORKERS = min([os.cpu_count(), 8 if 8 > 1 else 0, 8])
 CFG.VAL.DATA.PIN_MEMORY = True
 
 ############################## Test Configuration ##############################
@@ -148,7 +150,7 @@ CFG.TEST = EasyDict()
 CFG.TEST.INTERVAL = 1
 CFG.TEST.DATA = EasyDict()
 CFG.TEST.DATA.BATCH_SIZE = 8
-CFG.TEST.DATA.NUM_WORKERS = 2
+CFG.TEST.DATA.NUM_WORKERS = min([os.cpu_count(), 8 if 8 > 1 else 0, 8])
 CFG.TEST.DATA.PIN_MEMORY = True
 
 ############################## Evaluation Configuration ##############################
