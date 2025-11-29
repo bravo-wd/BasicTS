@@ -24,6 +24,10 @@ from tqdm import tqdm
 from ..utils import MeterPool, get_dataset_name
 from . import optim
 
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 class BaseEpochRunner(metaclass=ABCMeta):
     """
@@ -82,6 +86,61 @@ class BaseEpochRunner(metaclass=ABCMeta):
         self.ckpt_save_strategy = None
         self.num_epochs = None
         self.start_epoch = None
+
+        # param
+        self.model_name = cfg['MODEL.NAME']
+        self.ckpt_save_dir = get_ckpt_save_dir(cfg)
+        self.logger.info('Set ckpt save dir: \'{}\''.format(self.ckpt_save_dir))
+        self.ckpt_save_strategy = None
+        self.num_epochs = None
+        self.start_epoch = None
+
+        # ===== WandB: 初始化 run（只在 master 进程 + 安装了 wandb + 配置开启 时启用） =====
+        self.wandb_run = None
+        self.use_wandb = (
+            wandb is not None
+            and cfg.get('LOG', {}).get('USE_WANDB', False)
+            and is_master()
+        )
+
+        if self.use_wandb:
+            wb_cfg = cfg.get('LOG', {}).get('WANDB', {})
+            project = wb_cfg.get('PROJECT', 'BasicTS')
+            entity  = wb_cfg.get('ENTITY', None)
+            name    = wb_cfg.get('NAME', f"{self.model_name}_{get_dataset_name(cfg)}")
+            tags    = wb_cfg.get('TAGS', [])
+            group   = wb_cfg.get('GROUP', None)
+
+            train_cfg      = cfg.get('TRAIN', {})
+            train_data_cfg = train_cfg.get('DATA', {})
+            optim_cfg      = train_cfg.get('OPTIM', {})
+            optim_param    = optim_cfg.get('PARAM', optim_cfg.get('ARGS', {}))
+
+            # 把关键超参写进 config，方便后面筛选
+            wandb_config = {
+                "dataset":      get_dataset_name(cfg),
+                "model":        self.model_name,
+                "num_epochs":   train_cfg.get('NUM_EPOCHS', cfg.get('TRAIN.NUM_EPOCHS')),
+                "batch_size":   train_data_cfg.get('BATCH_SIZE'),
+                "lr":           optim_param.get('lr'),
+                "weight_decay": optim_param.get('weight_decay', 0.0),
+                "input_len":    cfg.get('DATASET', {}).get('PARAM', {}).get('input_len', None),
+                "output_len":   cfg.get('DATASET', {}).get('PARAM', {}).get('output_len', None),
+            }
+
+            self.wandb_run = wandb.init(
+                project = project,
+                entity  = entity,
+                name    = name,
+                group   = group,
+                tags    = tags,
+                config  = wandb_config,
+                dir     = os.path.join(self.ckpt_save_dir, "wandb"),
+                reinit  = True,
+            )
+            self.logger.info(f"[wandb] Initialized: project={project}, name={name}")
+        # ======================================================================
+
 
         self.val_interval = cfg.get('VAL', {}).get('INTERVAL', 1)
         self.test_interval = cfg.get('TEST', {}).get('INTERVAL', 1)
@@ -336,6 +395,9 @@ class BaseEpochRunner(metaclass=ABCMeta):
         # create optim
         self.optim = self.build_optim(cfg['TRAIN.OPTIM'], self.model)
         self.logger.info('Set optim: {}'.format(self.optim))
+        # ===== 可选：让 wandb 监控参数和梯度 =====
+        if self.use_wandb and self.wandb_run is not None:
+            self.wandb_run.watch(self.model, log="gradients", log_freq=100)
 
         # create lr_scheduler
         self.build_lr_scheduler(cfg)
@@ -789,7 +851,13 @@ class BaseEpochRunner(metaclass=ABCMeta):
 
         if is_master():
             # close tensorboard writer
-            self.tensorboard_writer.close()
+            # self.tensorboard_writer.close()
+            # 先关 TensorBoard
+            if self.tensorboard_writer is not None:
+                self.tensorboard_writer.close()
+            # 再关 wandb
+            if self.use_wandb and self.wandb_run is not None:
+                self.wandb_run.finish()
 
         if hasattr(cfg, 'TEST'):
             # evaluate the best model on the test set
@@ -1027,6 +1095,14 @@ class BaseEpochRunner(metaclass=ABCMeta):
     @master_only
     def plt_epoch_meters(self, meter_type, step) -> None:
         self.meter_pool.plt_meters(meter_type, step, self.tensorboard_writer)
+
+        if self.use_wandb and self.wandb_run is not None:
+            metrics = self.meter_pool.to_dict(meter_type, value_type='avg')
+            if metrics:
+                # 如果你不想 name 里带 /，可以在这里做一次替换：
+                # metrics = {k.replace('/', '_'): v for k, v in metrics.items()}
+                metrics["epoch"] = step
+                self.wandb_run.log(metrics, step=step)
 
     @master_only
     def reset_epoch_meters(self) -> None:

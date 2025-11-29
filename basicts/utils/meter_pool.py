@@ -101,6 +101,25 @@ class MeterPool:
                 tensorboard_writer.add_scalar(name, get_value(value['meter']), global_step=step)
         tensorboard_writer.flush()
 
+    def to_dict(self, meter_type: str, value_type: str = 'avg') -> Dict[str, float]:
+        """把某一类的 meter 转成 {name: value} 字典，方便 wandb.log.
+
+        Args:
+            meter_type (str): 'train' / 'val' / 'test' / 'inference' 等
+            value_type (str): 'avg' 用 meter.value, 'last' 用 meter.last
+        """
+        assert value_type in ['avg', 'last'], "value_type must be 'avg' or 'last'"
+
+        def get_v(meter):
+            return meter.value if value_type == 'avg' else meter.last
+
+        result: Dict[str, float] = {}
+        for name, info in self._pool.items():
+            if info['type'] == meter_type and info['plt']:
+                meter = info['meter']
+                result[name] = get_v(meter)
+        return result
+
     def reset(self):
         """Reset all meters.
         """
