@@ -152,7 +152,7 @@ CFG.TEST.DATA.BATCH_SIZE = 64
 CFG.EVAL = EasyDict()
 
 # Evaluation parameters
-CFG.EVAL.HORIZONS = list(range(1, 13))  # Prediction horizons for evaluation. Default: []
+CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
 CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True
 
 ############################## Logging / WandB ##############################
@@ -163,6 +163,6 @@ CFG.LOG.WANDB = EasyDict({
     "PROJECT": f"{CFG.MODEL.NAME}",  # wandb 项目名
     "ENTITY": None,  # 个人账号用 None，就走默认账号/团队
     "NAME": f"{CFG.MODEL.NAME}_{CFG.DATASET.NAME}",
-    "TAGS": ["STID", CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
+    "TAGS": [CFG.MODEL.NAME, CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
     "GROUP": "debug"  # 可选：多次重复实验时做分组
 })
