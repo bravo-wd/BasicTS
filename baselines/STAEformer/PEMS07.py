@@ -48,7 +48,7 @@ NUM_EPOCHS = 100
 ############################## General Configuration ##############################
 CFG = EasyDict()
 # General settings
-CFG.DESCRIPTION = 'An Example Config'
+CFG.DESCRIPTION = 'STAEformer-PEMS07-Config'
 # 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
 _env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
 if _env_gpu_num is not None:
@@ -129,6 +129,7 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "milestones": [20, 25],
     "gamma": 0.1
 }
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30
 # 提前停止
 CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30 # 提前停止的耐心值。默认值：None。如果未指定，则不会使用提前停止。
 # Train data loader settings
@@ -153,5 +154,17 @@ CFG.TEST.DATA.BATCH_SIZE = 64
 CFG.EVAL = EasyDict()
 
 # Evaluation parameters
-CFG.EVAL.HORIZONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] # Prediction horizons for evaluation. Default: []
+CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
 CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True
+
+############################## Logging / WandB ##############################
+CFG.LOG = EasyDict()
+CFG.LOG.USE_WANDB = True  # 一键开/关 wandb
+
+CFG.LOG.WANDB = EasyDict({
+    "PROJECT": f"{CFG.MODEL.NAME}",  # wandb 项目名
+    "ENTITY": None,  # 个人账号用 None，就走默认账号/团队
+    "NAME": f"{CFG.MODEL.NAME}_{CFG.DATASET.NAME}",
+    "TAGS": [CFG.MODEL.NAME, CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
+    "GROUP": "debug"  # 可选：多次重复实验时做分组
+})
