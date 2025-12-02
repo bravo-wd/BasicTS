@@ -848,26 +848,32 @@ class BaseEpochRunner(metaclass=ABCMeta):
             cfg (Dict): Configuration.
             train_epoch (Optional[int]): End epoch if in training process.
         """
-
-        if is_master():
-            # close tensorboard writer
-            # self.tensorboard_writer.close()
-            # 先关 TensorBoard
-            if self.tensorboard_writer is not None:
-                self.tensorboard_writer.close()
-            # 再关 wandb
-            if self.use_wandb and self.wandb_run is not None:
-                self.wandb_run.finish()
-
+        # 1) 先在 test 集上评估 best model（这里面会调用 plt_epoch_meters -> wandb.log）
         if hasattr(cfg, 'TEST'):
             # evaluate the best model on the test set
             best_model_path = os.path.join(
                 self.ckpt_save_dir,
-                '{}_best_val_{}.pt'.format(self.model_name, self.target_metrics.replace('/', '_'))
+                '{}_best_val_{}.pt'.format(
+                    self.model_name,
+                    self.target_metrics.replace('/', '_')
+                )
             )
             self.logger.info('Evaluating the best model on the test set.')
             self.load_model(ckpt_path=best_model_path, strict=True)
-            self.test_pipeline(cfg=cfg, train_epoch=train_epoch, save_metrics=True, save_results=self.save_results)
+            self.test_pipeline(
+                cfg=cfg,
+                train_epoch=train_epoch,
+                save_metrics=True,
+                save_results=self.save_results
+            )
+
+        # 2) 再关 TensorBoard 和 wandb
+        if is_master():
+            if getattr(self, "tensorboard_writer", None) is not None:
+                self.tensorboard_writer.close()
+            if getattr(self, "use_wandb", False) and getattr(self, "wandb_run", None) is not None:
+                self.wandb_run.finish()
+
 
     # endregion Hook Functions
 
