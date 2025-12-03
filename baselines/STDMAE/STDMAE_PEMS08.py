@@ -67,8 +67,16 @@ NUM_EPOCHS = 300
 ############################## General Configuration ##############################
 CFG = EasyDict()
 # General settings
-CFG.DESCRIPTION = 'An Example Config'
-CFG.GPU_NUM = 2 # Number of GPUs to use (0 for CPU mode)
+CFG.DESCRIPTION = 'STDMAE-PEMS08-Config'
+# 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
+_env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
+if _env_gpu_num is not None:
+    try:
+        CFG.GPU_NUM = int(_env_gpu_num)
+    except ValueError:
+        CFG.GPU_NUM = 1  # 出错就用单卡
+else:
+    CFG.GPU_NUM = 1  # 默认单卡
 # Runner
 CFG.RUNNER = SimpleTimeSeriesForecastingRunner
 
@@ -142,6 +150,7 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "milestones":[1, 18, 36, 54, 72],
     "gamma":0.5
 }
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30
 # Train data loader settings
 CFG.TRAIN.DATA = EasyDict()
 CFG.TRAIN.DATA.BATCH_SIZE = 8
@@ -178,5 +187,17 @@ CFG.TEST.DATA.PIN_MEMORY = True
 CFG.EVAL = EasyDict()
 
 # Evaluation parameters
-CFG.EVAL.HORIZONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] # Prediction horizons for evaluation. Default: []
+CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
 CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True
+
+############################## Logging / WandB ##############################
+CFG.LOG = EasyDict()
+CFG.LOG.USE_WANDB = True  # 一键开/关 wandb
+
+CFG.LOG.WANDB = EasyDict({
+    "PROJECT": f"{CFG.MODEL.NAME}",  # wandb 项目名
+    "ENTITY": None,  # 个人账号用 None，就走默认账号/团队
+    "NAME": f"{CFG.MODEL.NAME}_{CFG.DATASET.NAME}",
+    "TAGS": [CFG.MODEL.NAME, CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
+    "GROUP": "debug"  # 可选：多次重复实验时做分组
+})
