@@ -45,8 +45,16 @@ NUM_EPOCHS = 100
 ############################## General Configuration ##############################
 CFG = EasyDict()
 # General settings
-CFG.DESCRIPTION = 'An Example Config'
-CFG.GPU_NUM = 1 # Number of GPUs to use (0 for CPU mode)
+CFG.DESCRIPTION = 'DCRNN-PEMS08-Config'
+# 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
+_env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
+if _env_gpu_num is not None:
+    try:
+        CFG.GPU_NUM = int(_env_gpu_num)
+    except ValueError:
+        CFG.GPU_NUM = 1  # 出错就用单卡
+else:
+    CFG.GPU_NUM = 1  # 默认单卡
 # Runner
 CFG.RUNNER = SimpleTimeSeriesForecastingRunner
 # DCRNN does not allow to load parameters since it creates parameters in the first iteration
@@ -121,6 +129,7 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "milestones": [80],
     "gamma": 0.3
 }
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30
 # Train data loader settings
 CFG.TRAIN.DATA = EasyDict()
 CFG.TRAIN.DATA.BATCH_SIZE = 64
@@ -143,5 +152,17 @@ CFG.TEST.DATA.BATCH_SIZE = 64
 CFG.EVAL = EasyDict()
 
 # Evaluation parameters
-CFG.EVAL.HORIZONS = [3, 6, 12] # Prediction horizons for evaluation. Default: []
+CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
 CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True
+
+############################## Logging / WandB ##############################
+CFG.LOG = EasyDict()
+CFG.LOG.USE_WANDB = True  # 一键开/关 wandb
+
+CFG.LOG.WANDB = EasyDict({
+    "PROJECT": f"{CFG.MODEL.NAME}",  # wandb 项目名
+    "ENTITY": None,  # 个人账号用 None，就走默认账号/团队
+    "NAME": f"{CFG.MODEL.NAME}_{CFG.DATASET.NAME}",
+    "TAGS": [CFG.MODEL.NAME, CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
+    "GROUP": "debug"  # 可选：多次重复实验时做分组
+})
