@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
 import json
 import argparse
@@ -99,13 +96,7 @@ def format_mape(mape):
 def print_summary_table(best_metrics):
     """
     打印一个“论文风”的汇总大表（每个模型-数据集只保留最优一次）：
-
-    +--------+---------------------------+---------------------------+ ...
-    | Dataset|          PEMS04           |          PEMS07           |
-    | Metric |   MAE   RMSE   MAPE       |   MAE   RMSE   MAPE       |
-    +--------+---------------------------+---------------------------+
-    | STID   | 18.38  29.95  12.04       | 19.61  32.79   8.30       |
-    +--------+---------------------------+---------------------------+
+    并且按“跨数据集的平均 MAE”从小到大对模型做排序。
     """
     if not best_metrics:
         print("没有在指定目录下找到任何 test_metrics.json")
@@ -114,6 +105,28 @@ def print_summary_table(best_metrics):
     models = sorted({m for (m, d) in best_metrics.keys()})
     datasets = sorted({d for (m, d) in best_metrics.keys()})
     d2i = {d: i for i, d in enumerate(datasets)}
+
+    # === 先按“平均 MAE”对模型做一个排序 ===
+    model_avg_mae = {}
+    for m in models:
+        maes = []
+        for d in datasets:
+            info = best_metrics.get((m, d))
+            if info is None:
+                continue
+            mae = info.get("MAE")
+            if isinstance(mae, (int, float)):
+                maes.append(mae)
+        if maes:
+            model_avg_mae[m] = sum(maes) / len(maes)
+        else:
+            # 没有任何合法 MAE 的模型，放到最后
+            model_avg_mae[m] = float("inf")
+
+    # 从小到大：平均 MAE 越小，排得越靠前
+    models = sorted(models, key=lambda mm: model_avg_mae.get(mm, float("inf")))
+    # 如果你想从大到小，就加 reverse=True：
+    # models = sorted(models, key=lambda mm: model_avg_mae.get(mm, float("inf")), reverse=True)
 
     # 先把所有数字转成字符串，后面好统一算宽度
     values = {}
@@ -131,11 +144,10 @@ def print_summary_table(best_metrics):
                 mape_s = format_mape(mape)
             values[(m, d)] = (mae_s, rmse_s, mape_s)
 
-    # 计算每一列的宽度
+    # 后面计算宽度、打印表头和行的逻辑保持不变
     num_cols = 1 + 3 * len(datasets)
     col_widths = [0] * num_cols
 
-    # 第 0 列：模型名 / Dataset / Metric
     col_widths[0] = max(
         len("Model"),
         len("Dataset"),
@@ -143,16 +155,13 @@ def print_summary_table(best_metrics):
         max(len(m) for m in models),
     )
 
-    # 其余列：MAE / RMSE / MAPE + 数据集名 + 数字
     for d in datasets:
         di = d2i[d]
         base = 1 + 3 * di
-        # 先保证放得下表头
         col_widths[base] = max(col_widths[base], len("MAE"), len(d))
         col_widths[base + 1] = max(col_widths[base + 1], len("RMSE"))
         col_widths[base + 2] = max(col_widths[base + 2], len("MAPE"))
 
-    # 再考虑具体数字
     for (m, d), (mae_s, rmse_s, mape_s) in values.items():
         di = d2i[d]
         base = 1 + 3 * di
@@ -164,10 +173,6 @@ def print_summary_table(best_metrics):
         return "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
 
     def format_row(cells, aligns):
-        """
-        cells: 每列内容
-        aligns: 'left' / 'right' / 'center' 或 对应长度的列表
-        """
         row = "|"
         for i, cell in enumerate(cells):
             text = "" if cell is None else str(cell)
@@ -184,22 +189,18 @@ def print_summary_table(best_metrics):
 
     # ===== 打印表头 =====
     print(border_line())
-
-    # 第一行：Dataset + 每个数据集名（只写在该组的第一个列）
     header1_cells = ["Dataset"]
     for d in datasets:
         header1_cells.extend([d, "", ""])
     print(format_row(header1_cells, aligns="center"))
 
-    # 第二行：Metric + MAE / RMSE / MAPE
     header2_cells = ["Metric"]
     for _ in datasets:
         header2_cells.extend(["MAE", "RMSE", "MAPE"])
     print(format_row(header2_cells, aligns="center"))
-
     print(border_line())
 
-    # ===== 打印数据行 =====
+    # ===== 打印数据行（已经按平均 MAE 排好序的 models）=====
     for m in models:
         cells = [m]
         for d in datasets:
