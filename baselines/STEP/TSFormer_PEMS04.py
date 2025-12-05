@@ -38,7 +38,7 @@ MODEL_PARAM = {
     "decoder_depth": 1,
     "mode": "pre-train"
 }
-NUM_EPOCHS = 150
+NUM_EPOCHS = 300
 
 ############################## General Configuration ##############################
 CFG = EasyDict()
@@ -126,7 +126,7 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "gamma": 0.5
 }
 # 提前停止
-CFG.TRAIN.EARLY_STOPPING_PATIENCE = None
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30
 # Train data loader settings
 CFG.TRAIN.DATA = EasyDict()
 CFG.TRAIN.DATA.BATCH_SIZE = 8
@@ -159,3 +159,15 @@ CFG.EVAL = EasyDict()
 
 # Evaluation parameters
 CFG.EVAL.USE_GPU = True  # Whether to use GPU for evaluation. Default: True
+
+############################## Logging / WandB ##############################
+CFG.LOG = EasyDict()
+CFG.LOG.USE_WANDB = True  # 一键开/关 wandb
+
+CFG.LOG.WANDB = EasyDict({
+    "PROJECT": f"{CFG.MODEL.NAME}",  # wandb 项目名
+    "ENTITY": None,  # 个人账号用 None，就走默认账号/团队
+    "NAME": f"{CFG.MODEL.NAME}_{CFG.DATASET.NAME}",
+    "TAGS": [CFG.MODEL.NAME, CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
+    "GROUP": "debug"  # 可选：多次重复实验时做分组
+})

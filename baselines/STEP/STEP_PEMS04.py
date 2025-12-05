@@ -29,7 +29,7 @@ NULL_VAL = regular_settings['NULL_VAL']  # Null value in the data
 MODEL_ARCH = STEP
 MODEL_PARAM = {
     "dataset_name": DATA_NAME,
-    "pre_trained_tsformer_path": "checkpoints/TSFormer/PEMS04_100_2016_12/3cef8458e288da6f11d8d9a28f789d90/TSFormer_best_val_MAE.pt",
+    "pre_trained_tsformer_path": "checkpoints/TSFormer/xxx/xxx/TSFormer_best_val_MAE.pt",
     "short_term_len": INPUT_LEN_SHORT,
     "long_term_len": INPUT_LEN,
     "tsformer_args": {
@@ -74,7 +74,7 @@ NUM_EPOCHS = 100
 ############################## General Configuration ##############################
 CFG = EasyDict()
 # General settings
-CFG.DESCRIPTION = 'An Example Config'
+CFG.DESCRIPTION = 'STEP-PEMS04-Config'
 # 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
 _env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
 if _env_gpu_num is not None:
@@ -157,6 +157,7 @@ CFG.TRAIN.LR_SCHEDULER.PARAM = {
     "milestones": [1, 18, 36, 54, 72],
     "gamma": 0.5
 }
+CFG.TRAIN.EARLY_STOPPING_PATIENCE = 30
 # Train data loader settings
 CFG.TRAIN.DATA = EasyDict()
 CFG.TRAIN.DATA.BATCH_SIZE = 8
@@ -191,4 +192,16 @@ CFG.EVAL = EasyDict()
 
 # Evaluation parameters
 CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
-CFG.EVAL.USE_GPU = False  # Whether to use GPU for evaluation. Default: True
+CFG.EVAL.USE_GPU = True  # Whether to use GPU for evaluation. Default: True
+
+############################## Logging / WandB ##############################
+CFG.LOG = EasyDict()
+CFG.LOG.USE_WANDB = True  # 一键开/关 wandb
+
+CFG.LOG.WANDB = EasyDict({
+    "PROJECT": f"{CFG.MODEL.NAME}",  # wandb 项目名
+    "ENTITY": None,  # 个人账号用 None，就走默认账号/团队
+    "NAME": f"{CFG.MODEL.NAME}_{CFG.DATASET.NAME}",
+    "TAGS": [CFG.MODEL.NAME, CFG.DATASET.NAME, f"in{INPUT_LEN}", f"out{OUTPUT_LEN}"],
+    "GROUP": "debug"  # 可选：多次重复实验时做分组
+})
