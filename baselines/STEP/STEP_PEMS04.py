@@ -29,7 +29,7 @@ NULL_VAL = regular_settings['NULL_VAL']  # Null value in the data
 MODEL_ARCH = STEP
 MODEL_PARAM = {
     "dataset_name": DATA_NAME,
-    "pre_trained_tsformer_path": "checkpoints/TSFormer/xxx/xxx/TSFormer_best_val_MAE.pt",
+    "pre_trained_tsformer_path": "checkpoints/TSFormer/PEMS04_300_2016_12/6e8128dccd35bbfe31c05d3e866c2b4e/TSFormer_best_val_MAE.pt",
     "short_term_len": INPUT_LEN_SHORT,
     "long_term_len": INPUT_LEN,
     "tsformer_args": {
