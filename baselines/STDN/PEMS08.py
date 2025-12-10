@@ -15,27 +15,27 @@ from .arch.utils import get_lpls
 
 ############################## Hot Parameters ##############################
 # Dataset & Metrics configuration
-DATA_NAME = 'PEMS04'  # Dataset name
+DATA_NAME = 'PEMS08'  # Dataset name
 regular_settings = get_regular_settings(DATA_NAME)
 INPUT_LEN = 12  # Length of input sequence
 OUTPUT_LEN = 12  # Length of output sequence
 TRAIN_VAL_TEST_RATIO = regular_settings['TRAIN_VAL_TEST_RATIO']  # Train/Validation/Test split ratios
-NORM_EACH_CHANNEL = regular_settings['NORM_EACH_CHANNEL'] # Whether to normalize each channel of the data
-RESCALE = regular_settings['RESCALE'] # Whether to rescale the data
-NULL_VAL = regular_settings['NULL_VAL'] # Null value in the data
+NORM_EACH_CHANNEL = regular_settings['NORM_EACH_CHANNEL']  # Whether to normalize each channel of the data
+RESCALE = regular_settings['RESCALE']  # Whether to rescale the data
+NULL_VAL = regular_settings['NULL_VAL']  # Null value in the data
+
 # Model architecture and parameters
 MODEL_ARCH = STDN
 NUM_EPOCHS = 300
-adj_mx, _ = load_adj("datasets/" + DATA_NAME +
-                     "/adj_mx.pkl", "original")
+adj_mx, _ = load_adj("datasets/" + DATA_NAME + "/adj_mx.pkl", "original")
 
 model_config = {
-    'Data':{
+    'Data': {
         'dataset_name': DATA_NAME,
-        'num_of_vertices': 307,
+        'num_of_vertices': 170,   # PEMS08 传感器数量
         'time_slice_size': 5,
     },
-    'Training':{
+    'Training': {
         'use_nni': 0,
         'L': 2,
         'K': 16,
@@ -65,7 +65,7 @@ MODEL_PARAM = {
 ############################## General Configuration ##############################
 CFG = EasyDict()
 # General settings
-CFG.DESCRIPTION = 'STDN-PEMS04-Config'
+CFG.DESCRIPTION = 'STDN-PEMS08-Config'
 # 优先从环境变量 BASICTS_GPU_NUM 里读 GPU 数量
 _env_gpu_num = os.environ.get("BASICTS_GPU_NUM")
 if _env_gpu_num is not None:
@@ -75,9 +75,9 @@ if _env_gpu_num is not None:
         CFG.GPU_NUM = 1  # 出错就用单卡
 else:
     CFG.GPU_NUM = 1  # 默认单卡
+
 # Runner
 CFG.RUNNER = STDNRunner
-
 
 ############################## Dataset Configuration ##############################
 CFG.DATASET = EasyDict()
@@ -96,7 +96,7 @@ CFG.DATASET.LPLS = get_lpls(adj_mx[0])  # Laplacian positional encoding
 ############################## Scaler Configuration ##############################
 CFG.SCALER = EasyDict()
 # Scaler settings
-CFG.SCALER.TYPE = ZScoreScaler # Scaler class
+CFG.SCALER.TYPE = ZScoreScaler  # Scaler class
 CFG.SCALER.PARAM = EasyDict({
     'dataset_name': DATA_NAME,
     'train_ratio': TRAIN_VAL_TEST_RATIO[0],
@@ -115,14 +115,13 @@ CFG.MODEL.TARGET_FEATURES = [0]
 CFG.MODEL.SETUP_GRAPH = True
 
 ############################## Metrics Configuration ##############################
-
 CFG.METRICS = EasyDict()
 # Metrics settings
 CFG.METRICS.FUNCS = EasyDict({
-                                'MAE': masked_mae,
-                                'MAPE': masked_mape,
-                                'RMSE': masked_rmse,
-                            })
+    'MAE': masked_mae,
+    'MAPE': masked_mape,
+    'RMSE': masked_rmse,
+})
 CFG.METRICS.TARGET = 'MAE'
 CFG.METRICS.NULL_VAL = NULL_VAL
 
@@ -135,19 +134,22 @@ CFG.TRAIN.CKPT_SAVE_DIR = os.path.join(
     '_'.join([DATA_NAME, str(CFG.TRAIN.NUM_EPOCHS), str(INPUT_LEN), str(OUTPUT_LEN)])
 )
 CFG.TRAIN.LOSS = masked_mae
+
 # Optimizer settings
 CFG.TRAIN.OPTIM = EasyDict()
 CFG.TRAIN.OPTIM.TYPE = "Adam"
 CFG.TRAIN.OPTIM.PARAM = {
-    "lr":model_config['Training']['learning_rate'],
+    "lr": model_config['Training']['learning_rate'],
 }
+
 # Learning rate scheduler settings
 CFG.TRAIN.LR_SCHEDULER = EasyDict()
 CFG.TRAIN.LR_SCHEDULER.TYPE = "StepLR"
 CFG.TRAIN.LR_SCHEDULER.PARAM = {
-    "step_size":model_config['Training']['decay_epoch'],
+    "step_size": model_config['Training']['decay_epoch'],
     "gamma": 0.9
 }
+
 # Train data loader settings
 CFG.TRAIN.DATA = EasyDict()
 CFG.TRAIN.DATA.BATCH_SIZE = model_config['Training']['batch_size']
@@ -168,12 +170,10 @@ CFG.TEST.DATA = EasyDict()
 CFG.TEST.DATA.BATCH_SIZE = 64
 
 ############################## Evaluation Configuration ##############################
-
 CFG.EVAL = EasyDict()
-
 # Evaluation parameters
 CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
-CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True
+CFG.EVAL.USE_GPU = True  # Whether to use GPU for evaluation. Default: True
 
 ############################## Logging / WandB ##############################
 CFG.LOG = EasyDict()
