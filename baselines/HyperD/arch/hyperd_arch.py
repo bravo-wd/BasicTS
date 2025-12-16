@@ -73,15 +73,15 @@ class HyperD(nn.Module):
 
 
     def forward(self, history_data: torch.Tensor, future_data: torch.Tensor, batch_seen: int, epoch: int, train: bool, **kwargs):
+        # history_data = [B, T, N, C]
+        x = history_data[..., 0]  # x: [B, T, N]
 
-        x = history_data[..., 0]
-
-        index_daily = history_data[..., 1] * self.daily_len
-        index_daily = index_daily[:, -1, 0]
+        index_daily = history_data[..., 1] * self.daily_len  # index_daily: [B, T, N]
+        index_daily = index_daily[:, -1, 0]  # index_daily: [B]
         index_weekly = history_data[..., 1] * self.daily_len + history_data[..., 2] * self.weekly_len
         index_weekly = index_weekly[:, -1, 0]
 
-        S_D_in = self.daily_emb(index_daily, self.seq_len)
+        S_D_in = self.daily_emb(index_daily, self.seq_len)  # S_D_in: [B, T, N]
         S_W_in = self.weekly_emb(index_weekly, self.seq_len)
         S_in = S_D_in + S_W_in
 
