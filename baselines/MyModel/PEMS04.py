@@ -152,6 +152,6 @@ CFG.TEST.DATA.BATCH_SIZE = 64
 CFG.EVAL = EasyDict()
 
 # Evaluation parameters
-CFG.EVAL.HORIZONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] # Prediction horizons for evaluation. Default: []
+CFG.EVAL.HORIZONS = range(1, 13)  # 1, 2, ..., 12
 CFG.EVAL.USE_GPU = True # Whether to use GPU for evaluation. Default: True
 CFG.EVAL.SAVE_RESULTS = True # 是否将评估结果保存为一个numpy文件。 默认值：False

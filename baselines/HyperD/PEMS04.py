@@ -12,6 +12,7 @@ from basicts.scaler import ZScoreScaler
 from basicts.utils import get_regular_settings, load_dataset_desc, load_adj
 
 from .arch import HyperD
+from .runner import HyperDRunner
 
 ############################## Hot Parameters ##############################
 # Dataset & Metrics configuration
@@ -58,7 +59,7 @@ if _env_gpu_num is not None:
 else:
     CFG.GPU_NUM = 1  # 默认单卡
 # Runner
-CFG.RUNNER = SimpleTimeSeriesForecastingRunner
+CFG.RUNNER = HyperDRunner
 
 ############################## Environment Configuration ##############################
 CFG.ENV = EasyDict() # Environment settings. Default: None

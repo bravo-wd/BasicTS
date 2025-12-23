@@ -1,8 +1,6 @@
 import torch
 from torch import nn
 
-from .mlp import MultiLayerPerceptron
-
 
 class MyModel(nn.Module):
     """
@@ -71,7 +69,8 @@ class MyModel(nn.Module):
 
     def forward(self, history_data: torch.Tensor, future_data: torch.Tensor, batch_seen: int, epoch: int, train: bool,
                 **kwargs) -> torch.Tensor:
-        """Feed forward of STID.
+        """
+        Feed forward of MyModel
 
         Args:
             history_data (torch.Tensor): history data with shape [B, L, N, C]
@@ -81,7 +80,7 @@ class MyModel(nn.Module):
         """
 
         # prepare data
-        input_data = history_data[..., range(self.input_dim)]
+        input_data = history_data[..., 0]
 
         if self.if_time_in_day:
             t_i_d_data = history_data[..., 1]
